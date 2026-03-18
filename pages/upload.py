@@ -1,6 +1,6 @@
 import streamlit as st
 import time
-
+import hashlib
 from utils.rag_state import (
     init_session_state,
     reset_all_chats,
@@ -193,12 +193,16 @@ if st.session_state.document_ready:
         # Clear all chats and the current document, then restart flow
         reset_all_chats()
         for key in [
+            "batch_id",
+            "num_files_uploaded",
+            "documents",
             "document_id",
             "document_name",
             "document_metadata",
             "document",
             "retriever",
             "document_ready",
+            "upload_chat_warning",
         ]:
             st.session_state.pop(key, None)
         st.rerun()
@@ -206,30 +210,52 @@ else:
     # Upload Section
     st.markdown('<div class="upload-wrapper">', unsafe_allow_html=True)
 
-    uploaded_file = st.file_uploader(
+    uploaded_files = st.file_uploader(
         "",
         type=["pdf"],
         label_visibility="collapsed",
+        accept_multiple_files=True,
     )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    if uploaded_file and not has_document():
-        st.success(f"File '{uploaded_file.name}' uploaded successfully!")
-        time.sleep(1)
-        show_loading_overlay("Processing your document")
+    if uploaded_files and not has_document():
+        # Basic batch metadata
+        st.session_state.num_files_uploaded = len(uploaded_files)
 
-        # Simulate ingestion
+        # Build per-file metadata for this batch
+        documents_meta = []
+        for f in uploaded_files:
+            file_bytes = f.getvalue()
+            doc_id = hashlib.md5(file_bytes).hexdigest()
+            documents_meta.append(
+                {
+                    "document_id": doc_id,
+                    "name": f.name,
+                    "size_bytes": len(file_bytes),
+                    "num_pages": None,  # to be filled by PDF parsing pipeline
+                }
+            )
+
+        st.session_state.documents = documents_meta
+
+        # Use the first file's name as a friendly label for now
+        label = (
+            uploaded_files[0].name
+            if len(uploaded_files) == 1
+            else f"{len(uploaded_files)} documents"
+        )
+
+        st.success(f"{len(uploaded_files)} file(s) uploaded successfully!")
+        time.sleep(1)
+        show_loading_overlay("Processing your documents")
+
+        # Simulate ingestion for now
         time.sleep(3)
 
-        # Here you will:
-        # 1. Extract text
-        # 2. Chunk
-        # 3. Embed
-        # 4. Store vector DB
-
-        # For now, just register the document in session state
-        set_current_document(uploaded_file=uploaded_file, num_pages=None)
+        # For backward compatibility, register the first file as the primary document
+        set_current_document(uploaded_file=uploaded_files[0], num_pages=None)
+        st.session_state.document_name = label
 
         # Redirect to chat page
         st.switch_page("pages/chat.py")

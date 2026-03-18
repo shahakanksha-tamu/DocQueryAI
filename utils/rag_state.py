@@ -10,6 +10,12 @@ from config import MAX_CHAT_SESSIONS_PER_DOCUMENT
 def _default_session_values() -> Dict[str, Any]:
     """Central place to define all session keys and their defaults."""
     return {
+        # One active batch of documents per session
+        "batch_id": None,
+        "num_files_uploaded": 0,
+        # Per-file metadata for the current batch:
+        # documents: List[{"document_id", "name", "size_bytes", "num_pages"}]
+        "documents": [],
         "document_id": None,
         "document_name": None,
         "document_metadata": {},

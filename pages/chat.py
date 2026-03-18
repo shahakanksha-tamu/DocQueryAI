@@ -95,8 +95,14 @@ with st.sidebar:
     # Small vertical gap between navbar and sections
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    st.subheader("Current Document")
+    st.subheader("Uploaded Documents")
     st.markdown(f"`{st.session_state.document_name}`")
+
+    # List all documents in this active batch, if available
+    documents = st.session_state.get("documents", [])
+    if documents:
+        for doc in documents:
+            st.markdown(f"- `{doc.get('name', 'unknown')}`")
 
     st.markdown("<hr style='margin: 16px 0;'/>", unsafe_allow_html=True)
     st.subheader("Chat Sessions")
