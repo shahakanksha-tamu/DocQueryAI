@@ -1,5 +1,3 @@
-import hashlib
-import time
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
@@ -14,14 +12,11 @@ def _default_session_values() -> Dict[str, Any]:
         "batch_id": None,
         "num_files_uploaded": 0,
         # Per-file metadata for the current batch:
-        # documents: List[{"document_id", "name", "size_bytes", "num_pages"}]
+        # documents: List[{"name", "size_bytes"}]
         "documents": [],
-        "document_id": None,
-        "document_name": None,
-        "document_metadata": {},
-        "document": None,  # raw UploadedFile or path; kept for now for compatibility
         "document_ready": False,
-        "retriever": None,
+        # In-memory vector store for current batch (not persisted)
+        "vectorstore": None,
         # Single active chat's messages (mirrors currently selected session)
         "messages": [],
         "chat_started": False,
@@ -43,43 +38,33 @@ def init_session_state() -> None:
 
 def has_document() -> bool:
     """Return True if a document has been successfully set and is ready for chat."""
-    return bool(st.session_state.get("document_ready"))
+    return bool(st.session_state.get("document_ready")) and bool(
+        st.session_state.get("num_files_uploaded", 0)
+    )
 
 
-def set_current_document(uploaded_file: Any, num_pages: Optional[int] = None) -> None:
+def set_uploaded_batch(documents: List[Dict[str, Any]], batch_id: Optional[str] = None) -> None:
     """
-    Register a newly uploaded document in session state.
+    Register the currently uploaded batch in session state.
 
-    This assigns a stable document_id based on file content, stores basic metadata,
-    and marks the document as ready. It also resets any prior chat history so the
-    new document starts with a clean conversation.
+    We intentionally store only lightweight UI metadata (count, names, sizes).
+    The RAG backend can build and persist the vector DB separately.
     """
-    # Generate a simple hash-based id from the file bytes for reproducibility
-    file_bytes = uploaded_file.getvalue()
-    document_id = hashlib.md5(file_bytes).hexdigest()
+    st.session_state.batch_id = batch_id
+    st.session_state.documents = documents
+    st.session_state.num_files_uploaded = len(documents)
 
-    st.session_state.document_id = document_id
-    st.session_state.document_name = getattr(uploaded_file, "name", "uploaded.pdf")
-    st.session_state.document = uploaded_file
-
-    metadata: Dict[str, Any] = {
-        "num_pages": num_pages,
-        "uploaded_at": time.time(),
-    }
-    st.session_state.document_metadata = metadata
-
-    # Reset all chat sessions and retriever for this new document
+    # Reset all chat sessions for a fresh batch
     st.session_state.messages = []
     st.session_state.chat_started = False
     st.session_state.chat_sessions = {}
     st.session_state.current_chat_id = None
-    st.session_state.retriever = None
 
     st.session_state.document_ready = True
 
 
 def reset_all_chats() -> None:
-    """Clear all chat sessions for the current document."""
+    """Clear all chat sessions for the current batch."""
     st.session_state.messages = []
     st.session_state.chat_started = False
     st.session_state.chat_sessions = {}
@@ -101,7 +86,7 @@ def start_new_chat_session(name: Optional[str] = None) -> Optional[str]:
     Create a new chat session for the current document and switch to it.
     Existing sessions are preserved so the user can switch between them.
     """
-    # Enforce an upper bound on number of chat sessions per document
+    # Enforce an upper bound on number of chat sessions per batch
     chat_sessions: Dict[str, Any] = st.session_state.get("chat_sessions", {})
     if len(chat_sessions) >= MAX_CHAT_SESSIONS_PER_DOCUMENT:
         st.session_state.error = (
@@ -138,8 +123,9 @@ def switch_chat_session(chat_id: str) -> None:
     st.session_state.current_chat_id = chat_id
     st.session_state.messages = list(chat_sessions[chat_id].get("messages", []))
     st.session_state.chat_started = bool(st.session_state.messages)
+
 def ensure_default_chat_session() -> None:
-    """Guarantee that at least one chat session exists for the current document."""
+    """Guarantee that at least one chat session exists for the current batch."""
     chat_sessions: Dict[str, Any] = st.session_state.get("chat_sessions", {})
     if chat_sessions:
         # If we already have a current chat selected, do not overwrite its in-memory

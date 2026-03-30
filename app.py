@@ -2,12 +2,35 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="DocQueryAI")
 
-st.markdown("""
+theme_base = st.get_option("theme.base") or "light"
+theme_primary = st.get_option("theme.primaryColor") or "#7C3AED"
+theme_bg = st.get_option("theme.backgroundColor") or ("#0b1120" if theme_base == "dark" else "#ffffff")
+theme_text = st.get_option("theme.textColor") or ("#e5e7eb" if theme_base == "dark" else "#0f172a")
+theme_secondary_bg = st.get_option("theme.secondaryBackgroundColor") or ("#020617" if theme_base == "dark" else "#f1f5f9")
+
+# Tune muted text per theme so light mode isn't dull.
+muted_text = "#94a3b8" if theme_base == "dark" else "#475569"
+
+st.markdown(
+    f"""
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
 <style>
+:root {{
+    --dq-primary: {theme_primary};
+    --dq-bg: {theme_bg};
+    --dq-text: {theme_text};
+    --dq-secondary-bg: {theme_secondary_bg};
+    --dq-muted: {muted_text};
+}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
+st.markdown(
+    """
+<style>
 [data-testid="stSidebar"] { display: none; }
 
 [data-testid="stMainBlockContainer"] {
@@ -17,8 +40,8 @@ st.markdown("""
 
 html, body, [class*="css"] {
     font-family: 'Sora', sans-serif;
-    background: radial-gradient(circle at 25% 20%, #0f172a 0%, #0b1120 60%);
-    color: white;
+    background: radial-gradient(circle at 25% 20%, rgba(124, 58, 237, 0.18) 0%, var(--dq-bg) 55%);
+    color: var(--dq-text);
 }
 
 .main .block-container {
@@ -43,14 +66,13 @@ html, body, [class*="css"] {
     font-weight: 700;
     font-size: 2.5rem;
     margin-bottom: 20px;
-
+    color: var(--dq-primary);
 }
 
 .brand-icon {
     font-size: 42px;
-    color: #7C3AED;
+    color: var(--dq-primary);
 }
-
 
 /* HERO FLEX */
 .hero-container {
@@ -72,13 +94,13 @@ html, body, [class*="css"] {
 /* Tagline */
 .hero-tagline {
     font-size: 1.2rem;
-    color: #94a3b8;
+    color: var(--dq-muted);
     margin-bottom: 2rem;
     max-width: 650px;
 }
 
 /* Accent colors */
-.purple { color: #7C3AED; }
+.purple { color: var(--dq-primary); }
 .orange { color: #FF7A18; }
 
 /* Force button wrapper to center */
@@ -90,7 +112,7 @@ html, body, [class*="css"] {
 
 /* Button styling */
 .hero-button {
-    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    background: linear-gradient(135deg, var(--dq-primary), #6D28D9);
     color: white;
     border-radius: 8px;
     padding: 0.85rem 1.8rem;
@@ -103,7 +125,6 @@ html, body, [class*="css"] {
 .hero-button:hover { transform: translateY(-2px); }
 
 /*Section Divider*/
-
 .section-divider {
     width: 140px;
     height: 1px;
@@ -125,12 +146,11 @@ html, body, [class*="css"] {
 
 .section-subtitle {
     font-size: 1.0rem;
-    color: #94a3b8;
+    color: var(--dq-muted);
     margin-bottom: 60px;
 }
 
 /*STEPS SECTION*/
-
 .steps-grid {
     display: flex;
     justify-content: space-between;
@@ -148,7 +168,7 @@ html, body, [class*="css"] {
 }
 
 .step-label {
-    color: #7C3AED;
+    color: var(--dq-primary);
     font-weight: 600;
     margin-bottom: 10px;
 }
@@ -160,7 +180,7 @@ html, body, [class*="css"] {
 }
 
 .step-desc {
-    color: #94a3b8;
+    color: var(--dq-muted);
     font-size: 1.05rem;
     line-height: 1.6;
 }
@@ -185,9 +205,10 @@ html, body, [class*="css"] {
 .upload-link {
     text-decoration: none !important;
 }
-
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Branding 
 st.markdown("""

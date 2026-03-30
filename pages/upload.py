@@ -1,18 +1,24 @@
 import streamlit as st
 import time
-import hashlib
+import uuid
 from utils.rag_state import (
     init_session_state,
     reset_all_chats,
-    set_current_document,
     has_document,
+    set_uploaded_batch,
 )
 from utils.spinner import show_loading_overlay
+from rag.rag_pipeline import rag_processing
 
 st.set_page_config(layout="wide", page_title="DocQueryAI - Upload")
 
 # Initialize a consistent session schema
 init_session_state()
+
+# Streamlit file_uploader keeps its selected files across reruns unless we
+# change its key. This ensures "Upload New Document(s)" truly starts fresh.
+if "upload_widget_key" not in st.session_state:
+    st.session_state["upload_widget_key"] = str(uuid.uuid4())
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,8 +26,6 @@ st.markdown("""
 
 <style>
 html, body, [data-testid="stAppViewContainer"] {
-    background-color: #020617 !important;
-    color: #e5e7eb !important;
     font-family: 'Sora', sans-serif;
 }
 
@@ -31,37 +35,8 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 [data-testid="stSidebar"] {
-    padding: 16px;
-    background-color: #0f172a !important;  /* slightly lighter than main background */
-    border-right: 1px solid #1e293b;
+    display: none;
 }
-
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 1.5rem;
-    margin-bottom: 30px;
-}
-
-.brand-icon {
-    font-size: 26px;
-    color: #2563eb;
-}
-
-
-.sidebar-btn {
-    background: #2563eb;
-    color: white;
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-align: center;
-    font-weight: 600;
-    margin-bottom: 20px;
-}
-
 
 .main-container {
     max-width: 800px;
@@ -97,7 +72,7 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stFileUploader"] {
     width: 80%;
     margin: auto;
-    border: 2px dashed #334155;
+    border: 2px dashed rgba(148, 163, 184, 0.35);
     border-radius: 14px;
     text-align: center;
     transition: all 0.2s ease;
@@ -115,8 +90,8 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 [data-testid="stFileUploader"]:hover {
-    border-color: #7C3AED;
-    background: #020617;
+    border-color: var(--primary-color);
+    background: var(--background-color);
 }
 
 [data-testid="stFileUploader"] button {
@@ -132,31 +107,12 @@ html, body, [data-testid="stAppViewContainer"] {
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.markdown(
-        """
-    <div class="brand">
-        <span class="material-icons brand-icon">psychology</span>
-        DocQueryAI
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    if st.button("Home"):
+# Main Content
+_, top_right = st.columns([12, 2])
+with top_right:
+    if st.button("Home", key="upload_top_home"):
         st.switch_page("app.py")
 
-    if st.button("Go to Chat"):
-        if has_document():
-            st.switch_page("pages/chat.py")
-        else:
-            # Set a flag so the warning is rendered in the main content area
-            st.session_state["upload_chat_warning"] = (
-                "Upload a PDF first to start chatting."
-            )
-
-# Main Content
 st.markdown(
     """
 <div class="main-container">
@@ -175,87 +131,67 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Show any warning about missing document when trying to go to chat
-warning_msg = st.session_state.get("upload_chat_warning")
-if warning_msg:
-    st.warning(warning_msg)
-    # Clear it after displaying once
-    st.session_state["upload_chat_warning"] = None
+if has_document():
+    names = [d.get("name", "unknown") for d in st.session_state.get("documents", [])]
+    label = names[0] if len(names) == 1 else f"{len(names)} documents"
+    st.info(f"You are currently working with: **{label}**")
 
+    _pad_l, col_continue, col_new, _pad_r = st.columns([2, 2, 2, 2])
+    with col_continue:
+        if st.button("Continue Chat", use_container_width=True, key="upload_continue_chat"):
+            st.switch_page("pages/chat.py")
+    with col_new:
+        if st.button(
+            "Upload New Document(s)",
+            use_container_width=True,
+            key="upload_new_documents",
+        ):
+            reset_all_chats()
 
-if st.session_state.document_ready:
-    st.info(f"You are currently working with: **{st.session_state.document_name}**")
+            st.session_state["upload_widget_key"] = str(uuid.uuid4())
 
-    if st.button("Continue Chat"):
-        st.switch_page("pages/chat.py")
-
-    if st.button("Upload New Document"):
-        # Clear all chats and the current document, then restart flow
-        reset_all_chats()
-        for key in [
-            "batch_id",
-            "num_files_uploaded",
-            "documents",
-            "document_id",
-            "document_name",
-            "document_metadata",
-            "document",
-            "retriever",
-            "document_ready",
-            "upload_chat_warning",
-        ]:
-            st.session_state.pop(key, None)
-        st.rerun()
+            for key in [
+                "batch_id",
+                "num_files_uploaded",
+                "documents",
+                "vectorstore",
+                "document_ready",
+            ]:
+                st.session_state.pop(key, None)
+            st.rerun()
 else:
     # Upload Section
     st.markdown('<div class="upload-wrapper">', unsafe_allow_html=True)
 
     uploaded_files = st.file_uploader(
-        "",
+        "Upload PDF document(s)",
         type=["pdf"],
         label_visibility="collapsed",
         accept_multiple_files=True,
+        key=f"uploader_{st.session_state.get('upload_widget_key')}",
     )
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     if uploaded_files and not has_document():
-        # Basic batch metadata
-        st.session_state.num_files_uploaded = len(uploaded_files)
-
-        # Build per-file metadata for this batch
-        documents_meta = []
-        for f in uploaded_files:
-            file_bytes = f.getvalue()
-            doc_id = hashlib.md5(file_bytes).hexdigest()
-            documents_meta.append(
-                {
-                    "document_id": doc_id,
-                    "name": f.name,
-                    "size_bytes": len(file_bytes),
-                    "num_pages": None,  # to be filled by PDF parsing pipeline
-                }
-            )
-
-        st.session_state.documents = documents_meta
-
-        # Use the first file's name as a friendly label for now
-        label = (
-            uploaded_files[0].name
-            if len(uploaded_files) == 1
-            else f"{len(uploaded_files)} documents"
-        )
-
         st.success(f"{len(uploaded_files)} file(s) uploaded successfully!")
         time.sleep(1)
         show_loading_overlay("Processing your documents")
 
-        # Simulate ingestion for now
-        time.sleep(3)
+        # lightweight UI metadata (no content stored)
+        documents_meta = []
+        for f in uploaded_files:
+            file_bytes = f.getvalue()
+            documents_meta.append({"name": f.name, "size_bytes": len(file_bytes)})
 
-        # For backward compatibility, register the first file as the primary document
-        set_current_document(uploaded_file=uploaded_files[0], num_pages=None)
-        st.session_state.document_name = label
+        batch_id = str(uuid.uuid4())
+
+        # PDFs -> pages -> chunks -> in-memory Chroma vectorstore
+        _, _, vectorstore = rag_processing(uploaded_files=uploaded_files, batch_id=batch_id)
+        st.session_state.vectorstore = vectorstore
+
+        # Mark batch as ready for chat (store only lightweight metadata)
+        set_uploaded_batch(documents=documents_meta, batch_id=batch_id)
 
         # Redirect to chat page
         st.switch_page("pages/chat.py")

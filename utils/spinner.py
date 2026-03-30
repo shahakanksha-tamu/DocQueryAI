@@ -9,7 +9,7 @@ def show_loading_overlay(message="Processing your document..."):
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(15, 23, 42, 0.85);
+        background: rgba(0, 0, 0, 0.55);
         backdrop-filter: blur(4px);
         z-index: 9999;
         display: flex;
@@ -18,19 +18,19 @@ def show_loading_overlay(message="Processing your document..."):
     }}
 
     .loading-box {{
-        background: #020617;
+        background: var(--secondary-background-color, #ffffff);
         padding: 40px 60px;
         border-radius: 12px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.6);
         text-align: center;
         font-family: 'Sora', sans-serif;
-        color: #e5e7eb;
-        border: 1px solid #1e293b;
+        color: var(--text-color, #111827);
+        border: 1px solid rgba(148, 163, 184, 0.18);
     }}
 
     .spinner {{
-        border: 4px solid #1f2937;
-        border-top: 4px solid #7C3AED;
+        border: 4px solid rgba(148, 163, 184, 0.25);
+        border-top: 4px solid var(--primary-color, #7C3AED);
         border-radius: 50%;
         width: 50px;
         height: 50px;
