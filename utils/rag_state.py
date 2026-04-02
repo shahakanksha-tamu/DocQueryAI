@@ -46,9 +46,6 @@ def has_document() -> bool:
 def set_uploaded_batch(documents: List[Dict[str, Any]], batch_id: Optional[str] = None) -> None:
     """
     Register the currently uploaded batch in session state.
-
-    We intentionally store only lightweight UI metadata (count, names, sizes).
-    The RAG backend can build and persist the vector DB separately.
     """
     st.session_state.batch_id = batch_id
     st.session_state.documents = documents
@@ -128,9 +125,7 @@ def ensure_default_chat_session() -> None:
     """Guarantee that at least one chat session exists for the current batch."""
     chat_sessions: Dict[str, Any] = st.session_state.get("chat_sessions", {})
     if chat_sessions:
-        # If we already have a current chat selected, do not overwrite its in-memory
-        # messages on rerun. This prevents losing messages that have not yet been
-        # explicitly persisted by a session switch.
+       
         current_id = st.session_state.get("current_chat_id")
         if not current_id:
             # Default to first available chat if none is selected yet
