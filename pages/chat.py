@@ -1,4 +1,8 @@
+import sys
+from pathlib import Path
 import streamlit as st
+
+st.set_page_config(layout="wide", page_title="DocQueryAI - Chat")
 
 from utils.rag_state import (
     has_document,
@@ -11,13 +15,9 @@ from utils.rag_state import (
 
 from rag.qa import answer_question
 
-
-st.set_page_config(layout="wide", page_title="DocQueryAI - Chat")
-
 # Ensure expected session keys are present
 init_session_state()
 
-# Shared fonts and basic styling so sidebar branding matches upload page
 st.markdown(
     """
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -88,7 +88,7 @@ ensure_default_chat_session()
 
 
 with st.sidebar:
-    # Branding (consistent with upload page)
+    # Branding 
     st.markdown(
         """
     <div class="brand">
@@ -99,7 +99,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Simple navigation row (kept compact)
+    # Simple navigation row 
     nav_col_home, nav_col_upload, nav_col_new_chat = st.columns([1, 1, 1])
     with nav_col_home:
         if st.button("Home", key="nav_home"):
@@ -113,7 +113,7 @@ with st.sidebar:
             if new_id is not None:
                 st.rerun()
 
-    # Small vertical gap between navbar and sections
+ 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
     st.subheader("Uploaded Documents")
@@ -142,7 +142,7 @@ with st.sidebar:
     chat_sessions = list(st.session_state.get("chat_sessions", {}).items())
     current_chat_id = st.session_state.get("current_chat_id")
 
-    # Show any error from session management (e.g., max sessions reached)
+    # max sessions reached error
     if st.session_state.get("error"):
         st.warning(st.session_state.error)
         st.session_state.error = None
@@ -227,7 +227,7 @@ if prompt := st.chat_input("Ask a question about the document"):
         placeholder.markdown(answer)
         if sources:
             with st.expander("Sources"):
-                # Group pages by document so we don't repeat the same doc/page pairs
+                # Group pages by document
                 pages_by_doc = {}
                 for s in sources:
                     name = s.get("document_name") or "document"
@@ -235,7 +235,7 @@ if prompt := st.chat_input("Ask a question about the document"):
                     page = s.get("page_number")
                     if page is None:
                         continue
-                    # Key by both name and id so sources can't "mix" when filenames repeat.
+
                     pages_by_doc.setdefault((name, doc_id), set()).add(page)
 
                 if pages_by_doc:
@@ -264,7 +264,5 @@ if prompt := st.chat_input("Ask a question about the document"):
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
 
-    # Persist updated messages into the active chat session so they survive
-    # session switches and reruns.
     persist_current_chat_messages()
 

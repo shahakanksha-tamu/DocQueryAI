@@ -1,6 +1,9 @@
+import sys
+from pathlib import Path
 import streamlit as st
 import time
 import uuid
+
 from utils.rag_state import (
     init_session_state,
     reset_all_chats,
@@ -12,11 +15,8 @@ from rag.rag_pipeline import rag_processing
 
 st.set_page_config(layout="wide", page_title="DocQueryAI - Upload")
 
-# Initialize a consistent session schema
 init_session_state()
 
-# Streamlit file_uploader keeps its selected files across reruns unless we
-# change its key. This ensures "Upload New Document(s)" truly starts fresh.
 if "upload_widget_key" not in st.session_state:
     st.session_state["upload_widget_key"] = str(uuid.uuid4())
 
@@ -45,7 +45,6 @@ html, body, [data-testid="stAppViewContainer"] {
     margin-right: auto;
     text-align: center;
 }
-
 
 .upload-icon-wrapper {
     width: 100px;

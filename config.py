@@ -1,17 +1,23 @@
-# Chat session
+import os
+
+# Chat session (Streamlit)
 MAX_CHAT_SESSIONS_PER_DOCUMENT = 5
 
-# Chunking parameters
+# Chunking and retrieval
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
+TOP_K_RETRIEVAL = 5
 
-# Retrieval
-TOP_K_RETRIEVAL = 6
+# Model
+HF_EMBEDDING_MODEL = os.environ.get(
+    "HF_EMBEDDING_MODEL",
+    "BAAI/bge-small-en-v1.5",
+)
+HF_EMBEDDING_DEVICE = os.environ.get("HF_EMBEDDING_DEVICE", "cpu").strip().lower()
 
-# Ollama (local)
-OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_CHAT_MODEL = "llama3:latest"
-OLLAMA_TEMPERATURE = 0.0
-
-# Embedding model
-OLLAMA_EMBED_MODEL = "nomic-embed-text"
+HF_CHAT_MODEL = os.environ.get(
+    "HF_CHAT_MODEL",
+    "meta-llama/Llama-3.3-70B-Instruct",
+)
+HF_CHAT_MAX_NEW_TOKENS = int(os.environ.get("HF_CHAT_MAX_NEW_TOKENS", "512"))
+HF_CHAT_TEMPERATURE = float(os.environ.get("HF_CHAT_TEMPERATURE", "0.2"))

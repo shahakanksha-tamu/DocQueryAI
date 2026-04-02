@@ -2,6 +2,9 @@
 showSidebarNavigation = false
 toolbarMode = "minimal"
 
+[server]
+fileWatcherType = "none"
+
 [theme]
 base = "dark"
 font = "sans serif" 
