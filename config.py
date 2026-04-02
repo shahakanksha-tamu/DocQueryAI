@@ -13,5 +13,5 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_CHAT_MODEL = "llama3:latest"
 OLLAMA_TEMPERATURE = 0.0
 
-# Embedding model (pull with `ollama pull nomic-embed-text`)
+# Embedding model
 OLLAMA_EMBED_MODEL = "nomic-embed-text"

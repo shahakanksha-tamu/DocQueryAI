@@ -5,8 +5,9 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 
 from config import OLLAMA_BASE_URL, OLLAMA_EMBED_MODEL
+import streamlit as st
 
-
+@st.cache_resource
 def get_embeddings() -> OllamaEmbeddings:
     """Return an OllamaEmbeddings instance configured from config.py."""
     return OllamaEmbeddings(model=OLLAMA_EMBED_MODEL, base_url=OLLAMA_BASE_URL)

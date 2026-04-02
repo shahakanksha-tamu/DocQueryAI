@@ -3,6 +3,6 @@ showSidebarNavigation = false
 toolbarMode = "minimal"
 
 [theme]
-base = "light"
+base = "dark"
+font = "sans serif" 
 primaryColor = "#7C3AED"
-font = "sans serif"
