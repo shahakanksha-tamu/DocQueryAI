@@ -9,6 +9,7 @@ from config import (
     OLLAMA_BASE_URL,
     OLLAMA_CHAT_MODEL,
     TOP_K_RETRIEVAL,
+    OLLAMA_TEMPERATURE,
 )
 
 
@@ -57,9 +58,6 @@ def answer_question(
     """
     retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
 
-    # LangChain retriever APIs vary across versions.
-    # Try `get_relevant_documents` first; if it doesn't exist (or fails),
-    # fall back to `invoke`.
     try:
         docs = retriever.get_relevant_documents(question)  # type: ignore[attr-defined]
     except Exception:
@@ -87,7 +85,7 @@ def answer_question(
         f"ANSWER:"
     )
 
-    llm = ChatOllama(model=OLLAMA_CHAT_MODEL, base_url=OLLAMA_BASE_URL, temperature=0)
+    llm = ChatOllama(model=OLLAMA_CHAT_MODEL, base_url=OLLAMA_BASE_URL, temperature=OLLAMA_TEMPERATURE)
     resp = llm.invoke(prompt)
 
     answer = getattr(resp, "content", None)
