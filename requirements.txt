@@ -1,4 +1,6 @@
 streamlit
+# ChromaDB → OpenTelemetry: avoid "Descriptors cannot be created directly" with protobuf 6+.
+protobuf>=4.25.3,<6
 huggingface-hub>=0.23.0
 langchain-community
 langchain-huggingface

@@ -1,3 +1,8 @@
+import os
+
+# Must run before `import streamlit` (Streamlit may import protobuf before Chroma loads).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import streamlit as st
 
 st.set_page_config(layout="wide", page_title="DocQueryAI")
