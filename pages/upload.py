@@ -105,16 +105,16 @@ html, body, [data-testid="stAppViewContainer"] {
     max-width: 600px;
 }
 
-[data-testid="stAppToolbar"] {
-    display: none;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # Main Content
 _, top_right = st.columns([12, 2])
 with top_right:
+    st.markdown(
+        '<div style="height: 2.25rem;" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
     if st.button("Home", key="upload_top_home"):
         st.switch_page("app.py")
 
