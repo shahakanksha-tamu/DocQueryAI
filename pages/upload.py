@@ -42,7 +42,6 @@ html, body, [data-testid="stAppViewContainer"] {
 
 .main-container {
     max-width: 800px;
-    margin-top: 4rem;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
