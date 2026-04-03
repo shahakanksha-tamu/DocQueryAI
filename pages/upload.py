@@ -111,6 +111,10 @@ html, body, [data-testid="stAppViewContainer"] {
 # Main Content
 _, top_right = st.columns([12, 2])
 with top_right:
+    st.markdown(
+        '<div style="height: 1.25rem;" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
     if st.button("Home", key="upload_top_home"):
         st.switch_page("app.py")
 
