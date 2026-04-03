@@ -1,7 +1,7 @@
 import os
 
 # Must run before `import streamlit` (Streamlit may import protobuf before Chroma loads).
-os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+# os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
 import streamlit as st
 
