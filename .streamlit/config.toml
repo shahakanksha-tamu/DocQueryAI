@@ -9,3 +9,6 @@ fileWatcherType = "none"
 base = "dark"
 font = "sans serif" 
 primaryColor = "#7C3AED"
+
+[ui]
+hideTopBar = true
