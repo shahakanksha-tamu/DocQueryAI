@@ -112,7 +112,7 @@ html, body, [data-testid="stAppViewContainer"] {
 _, top_right = st.columns([12, 2])
 with top_right:
     st.markdown(
-        '<div style="height: 2.25rem;" aria-hidden="true"></div>',
+        '<div style="height: 3.25rem;" aria-hidden="true"></div>',
         unsafe_allow_html=True,
     )
     if st.button("Home", key="upload_top_home"):
