@@ -204,6 +204,9 @@ cython_debug/
 # Streamlit secrets (never commit tokens)
 .streamlit/secrets.toml
 
+# Local PDF cache from development (if present)
+.pdf_cache/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

@@ -1,8 +1,6 @@
-import os
+import html
+import re
 
-
-import sys
-from pathlib import Path
 import streamlit as st
 
 st.set_page_config(layout="wide", page_title="DocQueryAI - Chat")
@@ -18,7 +16,82 @@ from utils.rag_state import (
 
 from rag.qa import answer_question
 
-# Ensure expected session keys are present
+# Two-step phase: Streamlit paints after each run; we need a fast run with only the user
+# bubble, then a run that calls the LLM (otherwise UI updates once after generation).
+CHAT_PHASE_KEY = "_dq_chat_phase"
+
+_WELCOME_ASSISTANT_MSG = (
+    "Hi — I'm your PDF assistant. Ask me anything about the document(s) you uploaded "
+    "and I'll answer from its contents and show **Sources** when I use them."
+)
+
+
+def _format_chat_body(text: str) -> str:
+    """Escape HTML, preserve line breaks, allow simple **bold** from the model."""
+    if not text:
+        return ""
+    safe = html.escape(str(text))
+    safe = safe.replace("\n", "<br/>")
+    safe = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", safe)
+    return safe
+
+
+def _chat_bubble_html(role: str, inner_html: str) -> str:
+    if role in ("user", "human"):
+        return (
+            f'<div class="dq-chat-row dq-row-user">'
+            f'<div class="dq-bubble dq-bubble-user" dir="auto">{inner_html}</div>'
+            f'<div class="dq-avatar dq-avatar-user" aria-hidden="true">'
+            f'<span class="material-icons dq-avatar-material">tag_faces</span>'
+            f"</div></div>"
+        )
+    return (
+        f'<div class="dq-chat-row dq-row-assistant">'
+        f'<div class="dq-avatar dq-avatar-assistant" aria-hidden="true">'
+        f'<span class="material-icons dq-avatar-material">smart_toy</span>'
+        f"</div>"
+        f'<div class="dq-bubble dq-bubble-assistant" dir="auto">{inner_html}</div>'
+        f"</div>"
+    )
+
+
+def render_chat_bubble(role: str, content: str) -> None:
+    st.markdown(_chat_bubble_html(role, _format_chat_body(content)), unsafe_allow_html=True)
+
+
+def _render_sources_expander(sources: list) -> None:
+    with st.expander("Sources"):
+        pages_by_doc: dict = {}
+        for s in sources:
+            name = s.get("document_name") or "document"
+            doc_id = s.get("document_id")
+            page = s.get("page_number")
+            if page is None:
+                continue
+            pages_by_doc.setdefault((name, doc_id), set()).add(page)
+
+        if pages_by_doc:
+            for (name, doc_id), pages in pages_by_doc.items():
+                sorted_pages = sorted(pages)
+                pages_str = ", ".join(str(p) for p in sorted_pages)
+                short_id = (doc_id or "")[:8]
+                suffix = f" ({short_id})" if short_id else ""
+                st.write(f"{name}{suffix}: pages {pages_str}")
+        else:
+            unique_docs = sorted(
+                {
+                    (
+                        s.get("document_name") or "document",
+                        (s.get("document_id") or "")[:8],
+                    )
+                    for s in sources
+                }
+            )
+            st.write(
+                ", ".join([f"{name} ({sid})" if sid else name for name, sid in unique_docs])
+            )
+
+
 init_session_state()
 
 st.markdown(
@@ -31,9 +104,10 @@ html, body, [data-testid="stAppViewContainer"] {
     font-family: 'Sora', sans-serif;
 }
 
-[data-testid="stMainBlockContainer"]{
-    padding-top: 20px !important;
-    padding-bottom: 10px !important;
+/* Room below Streamlit chrome (sidebar toggle / minimal toolbar) so titles are not clipped */
+[data-testid="stMainBlockContainer"] {
+    padding-top: calc(3.75rem + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 6rem !important;
 }
 
 [data-testid="stSidebar"] {
@@ -50,48 +124,116 @@ html, body, [data-testid="stAppViewContainer"] {
     font-size: 1.5rem;
     margin-bottom: 30px;
     font-family: 'Sora', sans-serif;
-    color: var(--primary-color);
+    color: #7c3aed;
 }
 
 .brand-icon {
     font-size: 26px;
-    color: var(--primary-color);
+    color: #7c3aed;
 }
 
-/* Sticky chat header (keeps "PDF Chat" visible while scrolling). */
 .dq-chat-header {
-    background: var(--background-color);
-    padding: 10px 0 8px 0;
-    margin-top: 10px;
+    background: transparent;
+    padding: 8px 0 12px 0;
+    margin-top: 4px;
+    margin-bottom: 1.25rem;
 }
 .dq-chat-title {
     font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
+    color: #e5e7eb;
 }
 .dq-chat-subtitle {
     margin-top: 6px;
-    opacity: 0.85;
+    color: #94a3b8;
 }
 
+/* WhatsApp-style: assistant left, user right */
+.dq-chat-row {
+    display: flex;
+    width: 100%;
+    margin-bottom: 0.65rem;
+}
+.dq-row-assistant {
+    justify-content: flex-start;
+    align-items: flex-end;
+    gap: 0.45rem;
+}
+.dq-row-user {
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 0.45rem;
+}
+/* Streamlit-style square avatars: orange bot (assistant), red user — matches default chat UI */
+.dq-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+.dq-avatar-assistant {
+    background: #ea580c;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.dq-avatar-user {
+    background: #dc2626;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.dq-avatar .dq-avatar-material {
+    font-size: 1.35rem !important;
+    line-height: 1 !important;
+}
+.dq-avatar-assistant .dq-avatar-material,
+.dq-avatar-user .dq-avatar-material {
+    color: #ffffff !important;
+}
+.dq-bubble {
+    max-width: min(88%, 34rem);
+    padding: 0.55rem 0.85rem 0.65rem;
+    border-radius: 1rem;
+    line-height: 1.45;
+    font-size: 0.95rem;
+    word-wrap: break-word;
+}
+.dq-bubble-assistant {
+    background: rgba(148, 163, 184, 0.16);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-bottom-left-radius: 0.25rem;
+    color: #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.dq-bubble-user {
+    background: color-mix(in srgb, #7c3aed 32%, rgba(30, 30, 40, 0.92));
+    border: 1px solid color-mix(in srgb, #7c3aed 45%, transparent);
+    border-bottom-right-radius: 0.25rem;
+    color: #f8fafc;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+.dq-bubble-user strong,
+.dq-bubble-assistant strong {
+    font-weight: 600;
+}
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Route protection: do not allow access to chat without a document
 if not has_document():
     st.warning("Please upload a PDF document before starting a chat.")
     if st.button("Go to Upload Page"):
         st.switch_page("pages/upload.py")
     st.stop()
 
-# Ensure we have at least one chat session for this document
 ensure_default_chat_session()
 
-
 with st.sidebar:
-    # Branding 
     st.markdown(
         """
     <div class="brand">
@@ -102,7 +244,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Simple navigation row 
     nav_col_home, nav_col_upload, nav_col_new_chat = st.columns([1, 1, 1])
     with nav_col_home:
         if st.button("Home", key="nav_home"):
@@ -116,7 +257,6 @@ with st.sidebar:
             if new_id is not None:
                 st.rerun()
 
- 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
     st.subheader("Uploaded Documents")
@@ -145,12 +285,10 @@ with st.sidebar:
     chat_sessions = list(st.session_state.get("chat_sessions", {}).items())
     current_chat_id = st.session_state.get("current_chat_id")
 
-    # max sessions reached error
     if st.session_state.get("error"):
         st.warning(st.session_state.error)
         st.session_state.error = None
 
-    # Render chat sessions in rows of 3 using Streamlit columns
     for idx, (chat_id, info) in enumerate(chat_sessions):
         if idx % 3 == 0:
             cols = st.columns(3)
@@ -184,88 +322,66 @@ st.markdown(
 if st.session_state.get("vectorstore") is None:
     st.info("Index not loaded in memory yet. Please re-upload documents to build the index.")
 
-# Initialize a welcome message once per chat session
 if not st.session_state.messages and not st.session_state.chat_started:
     st.session_state.messages.append(
         {
             "role": "assistant",
-            "content": "Ask me questions about your uploaded PDF.",
+            "content": _WELCOME_ASSISTANT_MSG,
         }
     )
     st.session_state.chat_started = True
 
 
-# Render existing messages for the current chat session
 for msg in st.session_state.messages:
     role = msg.get("role", "assistant")
     content = msg.get("content", "")
-    with st.chat_message(role):
-        st.markdown(content)
+    if role == "user":
+        render_chat_bubble("user", content)
+    else:
+        _a1, _a2 = st.columns([3, 1])
+        with _a1:
+            render_chat_bubble("assistant", content)
+            if msg.get("sources"):
+                _render_sources_expander(msg["sources"])
 
 
-# Handle new user input for the current chat session
-if prompt := st.chat_input("Ask a question about the document"):
-
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        placeholder.markdown("Generating answer...")
-
-        if st.session_state.get("vectorstore") is None:
-            answer = "Index not loaded. Please upload documents again."
-            sources = []
-        else:
-            try:
-                answer, sources = answer_question(
-                    vectorstore=st.session_state.vectorstore,
-                    question=prompt,
-                )
-            except Exception as e:
-                answer = f"Error during retrieval/QA: {e}"
-                sources = []
-
-        placeholder.markdown(answer)
-        if sources:
-            with st.expander("Sources"):
-                # Group pages by document
-                pages_by_doc = {}
-                for s in sources:
-                    name = s.get("document_name") or "document"
-                    doc_id = s.get("document_id")
-                    page = s.get("page_number")
-                    if page is None:
-                        continue
-
-                    pages_by_doc.setdefault((name, doc_id), set()).add(page)
-
-                if pages_by_doc:
-                    for (name, doc_id), pages in pages_by_doc.items():
-                        sorted_pages = sorted(pages)
-                        pages_str = ", ".join(str(p) for p in sorted_pages)
-                        short_id = (doc_id or "")[:8]
-                        suffix = f" ({short_id})" if short_id else ""
-                        st.write(f"{name}{suffix}: pages {pages_str}")
+_phase = st.session_state.get(CHAT_PHASE_KEY)
+if _phase == "paint_user":
+    st.session_state[CHAT_PHASE_KEY] = "generate"
+    st.rerun()
+elif _phase == "generate":
+    st.session_state[CHAT_PHASE_KEY] = None
+    msgs = st.session_state.messages
+    if msgs and msgs[-1].get("role") == "user":
+        prompt = (msgs[-1].get("content") or "").strip()
+        if prompt:
+            with st.spinner("Generating answer..."):
+                if st.session_state.get("vectorstore") is None:
+                    answer = "Index not loaded. Please upload documents again."
+                    sources = []
                 else:
-                    # Fallback: if page metadata is missing
-                    unique_docs = sorted(
-                        {
-                            (
-                                s.get("document_name") or "document",
-                                (s.get("document_id") or "")[:8],
-                            )
-                            for s in sources
-                        }
-                    )
-                    st.write(
-                        ", ".join(
-                            [f"{name} ({sid})" if sid else name for name, sid in unique_docs]
+                    try:
+                        answer, sources = answer_question(
+                            vectorstore=st.session_state.vectorstore,
+                            question=prompt,
                         )
-                    )
+                    except Exception as e:
+                        answer = f"Error during retrieval/QA: {e}"
+                        sources = []
 
-    st.session_state.messages.append({"role": "assistant", "content": answer})
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": answer,
+                    "sources": sources if sources else None,
+                }
+            )
+            persist_current_chat_messages()
+            st.rerun()
 
+
+if prompt := st.chat_input("Ask a question about the document"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state[CHAT_PHASE_KEY] = "paint_user"
     persist_current_chat_messages()
-
+    st.rerun()

@@ -90,8 +90,8 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 [data-testid="stFileUploader"]:hover {
-    border-color: var(--primary-color);
-    background: var(--background-color);
+    border-color: #7c3aed;
+    background: rgba(124, 58, 237, 0.08);
 }
 
 [data-testid="stFileUploader"] button {

@@ -4,27 +4,18 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="DocQueryAI")
 
-theme_base = st.get_option("theme.base") or "light"
-theme_primary = st.get_option("theme.primaryColor") or "#7C3AED"
-theme_bg = st.get_option("theme.backgroundColor") or ("#0b1120" if theme_base == "dark" else "#ffffff")
-theme_text = st.get_option("theme.textColor") or ("#e5e7eb" if theme_base == "dark" else "#0f172a")
-theme_secondary_bg = st.get_option("theme.secondaryBackgroundColor") or ("#020617" if theme_base == "dark" else "#f1f5f9")
-
-# Tune muted text per theme so light mode isn't dull.
-muted_text = "#94a3b8" if theme_base == "dark" else "#475569"
-
 st.markdown(
-    f"""
+    """
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
-:root {{
-    --dq-primary: {theme_primary};
-    --dq-bg: {theme_bg};
-    --dq-text: {theme_text};
-    --dq-secondary-bg: {theme_secondary_bg};
-    --dq-muted: {muted_text};
-}}
+:root {
+    --dq-primary: #7C3AED;
+    --dq-bg: #0b1120;
+    --dq-text: #e5e7eb;
+    --dq-secondary-bg: #020617;
+    --dq-muted: #94a3b8;
+}
 </style>
 """,
     unsafe_allow_html=True,
