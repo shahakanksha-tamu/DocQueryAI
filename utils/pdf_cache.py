@@ -64,3 +64,14 @@ def remove_batch_cache(batch_id: str | None) -> None:
     if d.is_dir():
         shutil.rmtree(d, ignore_errors=True)
 
+
+def remove_all_cache() -> None:
+    """
+    Remove all cached preview PDFs across batches.
+
+    Use this for strict privacy cleanup flows (e.g. explicit reset/new upload).
+    """
+    root = cache_root()
+    if root.is_dir():
+        shutil.rmtree(root, ignore_errors=True)
+
