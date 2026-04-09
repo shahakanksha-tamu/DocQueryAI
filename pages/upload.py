@@ -13,6 +13,7 @@ from utils.rag_state import (
     set_uploaded_batch,
 )
 from utils.spinner import show_loading_overlay
+from utils.pdf_cache import save_uploaded_pdfs_for_batch, remove_batch_cache
 from rag.rag_pipeline import rag_processing
 
 st.set_page_config(layout="wide", page_title="DocQueryAI - Upload")
@@ -182,19 +183,15 @@ else:
         time.sleep(1)
         show_loading_overlay("Processing your documents")
 
-        # lightweight UI metadata (no content stored)
-        documents_meta = []
-        for f in uploaded_files:
-            file_bytes = f.getvalue()
-            documents_meta.append({"name": f.name, "size_bytes": len(file_bytes)})
-
+        remove_batch_cache(st.session_state.get("batch_id"))
         batch_id = str(uuid.uuid4())
+        documents_meta = save_uploaded_pdfs_for_batch(uploaded_files, batch_id=batch_id)
 
         # PDFs -> pages -> chunks -> in-memory Chroma vectorstore
         _, _, vectorstore = rag_processing(uploaded_files=uploaded_files, batch_id=batch_id)
         st.session_state.vectorstore = vectorstore
 
-        # Mark batch as ready for chat (store only lightweight metadata)
+        # Mark batch as ready for chat (metadata includes cached file id for preview)
         set_uploaded_batch(documents=documents_meta, batch_id=batch_id)
 
         # Redirect to chat page

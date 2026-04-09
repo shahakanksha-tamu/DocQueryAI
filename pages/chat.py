@@ -1,5 +1,6 @@
 import html
 import re
+from urllib.parse import quote
 
 import streamlit as st
 
@@ -90,6 +91,18 @@ def _render_sources_expander(sources: list) -> None:
             st.write(
                 ", ".join([f"{name} ({sid})" if sid else name for name, sid in unique_docs])
             )
+
+
+def _doc_preview_row_html(name: str, href: str, size_mb: float | None = None) -> str:
+    name_esc = html.escape(str(name))
+    size_suffix = f" • {size_mb:.2f} MB" if isinstance(size_mb, float) else ""
+    return (
+        '<div class="dq-doc-row">'
+        '<span class="material-icons dq-doc-icon" aria-hidden="true">open_in_new</span>'
+        f'<a class="dq-doc-link" href="{href}" target="_blank" rel="noopener noreferrer">{name_esc}</a>'
+        f'<span class="dq-doc-size">{size_suffix}</span>'
+        "</div>"
+    )
 
 
 init_session_state()
@@ -210,15 +223,43 @@ html, body, [data-testid="stAppViewContainer"] {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .dq-bubble-user {
-    background: color-mix(in srgb, #7c3aed 32%, rgba(30, 30, 40, 0.92));
-    border: 1px solid color-mix(in srgb, #7c3aed 45%, transparent);
+    background: rgba(148, 163, 184, 0.16);
+    border: 1px solid rgba(148, 163, 184, 0.22);
     border-bottom-right-radius: 0.25rem;
-    color: #f8fafc;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+    color: #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .dq-bubble-user strong,
 .dq-bubble-assistant strong {
     font-weight: 600;
+}
+.dq-doc-hint {
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+.dq-doc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0.2rem 0 0.42rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    line-height: 1.25;
+}
+.dq-doc-icon {
+    font-size: 0.85rem !important;
+    opacity: 0.85;
+}
+.dq-doc-link {
+    color: #94a3b8;
+    text-decoration: underline;
+    text-underline-offset: 0.1rem;
+}
+.dq-doc-size {
+    opacity: 0.9;
 }
 </style>
 """,
@@ -252,7 +293,7 @@ with st.sidebar:
         if st.button("Upload", key="nav_upload"):
             st.switch_page("pages/upload.py")
     with nav_col_new_chat:
-        if st.button("+ New Chat", key="nav_new_chat"):
+        if st.button("New Chat", key="nav_new_chat"):
             new_id = start_new_chat_session()
             if new_id is not None:
                 st.rerun()
@@ -268,19 +309,40 @@ with st.sidebar:
             else f"{len(documents)} documents"
         )
         st.markdown(f"`{label}`")
+        st.markdown(
+            '<div class="dq-doc-hint">Click the document to open PDF preview.</div>',
+            unsafe_allow_html=True,
+        )
+        batch_id = st.session_state.get("batch_id")
         for doc in documents:
             name = doc.get("name", "unknown")
             size_bytes = doc.get("size_bytes")
+            cache_file = doc.get("cache_file")
             if isinstance(size_bytes, int):
                 size_mb = size_bytes / (1024 * 1024)
-                st.caption(f"{name} • {size_mb:.2f} MB")
+                if cache_file and batch_id:
+                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
+                    st.markdown(
+                        _doc_preview_row_html(name=name, href=href, size_mb=size_mb),
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.caption(f"{name} • {size_mb:.2f} MB")
             else:
-                st.caption(name)
+                if cache_file and batch_id:
+                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
+                    st.markdown(
+                        _doc_preview_row_html(name=name, href=href),
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.caption(name)
     else:
         st.markdown("No documents in session.")
 
     st.markdown("<hr style='margin: 16px 0;'/>", unsafe_allow_html=True)
     st.subheader("Chat Sessions")
+    st.caption("Use sessions to keep separate conversations for the same uploaded document(s).")
 
     chat_sessions = list(st.session_state.get("chat_sessions", {}).items())
     current_chat_id = st.session_state.get("current_chat_id")

@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 import streamlit as st
 
 from config import MAX_CHAT_SESSIONS_PER_DOCUMENT
+from utils.pdf_cache import remove_batch_cache
 
 
 def _default_session_values() -> Dict[str, Any]:
@@ -62,6 +63,7 @@ def set_uploaded_batch(documents: List[Dict[str, Any]], batch_id: Optional[str] 
 
 def reset_all_chats() -> None:
     """Clear all chat sessions for the current batch."""
+    remove_batch_cache(st.session_state.get("batch_id"))
     st.session_state.messages = []
     st.session_state.chat_started = False
     st.session_state.chat_sessions = {}
