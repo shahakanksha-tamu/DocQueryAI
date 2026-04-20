@@ -2,7 +2,9 @@ from langchain_core.documents import Document
 import uuid
 import fitz  # PyMuPDF
 
+
 def process_uploaded_documents(uploaded_files):
+    """One LangChain Document per non-empty PDF page per upload."""
     documents = []
 
     for file in uploaded_files:
@@ -15,6 +17,7 @@ def process_uploaded_documents(uploaded_files):
 
 
 def process_pdf_file(file):
+    """Extract text per page via PyMuPDF (skips blank pages)."""
     file_bytes = file.getvalue()
     pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
     try:
@@ -35,6 +38,7 @@ def process_pdf_file(file):
 
 
 def generate_document_object(pages, document_name, document_id):
+    """Build LangChain Documents with metadata for each page dict."""
     documents = []
     for page in pages:
         documents.append(

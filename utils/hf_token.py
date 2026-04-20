@@ -3,7 +3,7 @@ import streamlit as st
 
 
 def get_huggingface_api_token() -> str:
-
+    """HF token from env or Streamlit secrets; empty string if missing."""
     token = os.environ.get("HUGGINGFACE_API_TOKEN", "").strip()
     if token:
         return token
@@ -16,6 +16,7 @@ def get_huggingface_api_token() -> str:
     return ""
 
 def require_huggingface_api_token() -> str:
+    """Same as get_huggingface_api_token but raises if unset."""
     token = get_huggingface_api_token()
     if not token:
         raise ValueError(

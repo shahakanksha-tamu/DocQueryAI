@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Session-scoped preview cache (stored on disk in project workspace).
+# On-disk PDF copies for preview (project/.pdf_cache).
 _CACHE_ROOT = Path(__file__).resolve().parent.parent / ".pdf_cache"
 
 
@@ -21,9 +21,7 @@ def batch_dir(batch_id: str) -> Path:
 
 
 def is_valid_cache_filename(name: str) -> bool:
-    """
-    Reject path traversal and unexpected names; must match files written by save_uploaded_pdfs_for_batch.
-    """
+    """True if name looks like our cached file (no path tricks)."""
     if not name or len(name) > 200:
         return False
     if any(bad in name for bad in ("/", "\\", "..")):
@@ -38,9 +36,7 @@ def _safe_filename(name: str, max_len: int = 110) -> str:
 
 
 def save_uploaded_pdfs_for_batch(uploaded_files, batch_id: str) -> List[Dict[str, Any]]:
-    """
-    Save each uploaded PDF to disk and return lightweight metadata for chat sidebar.
-    """
+    """Write uploads under .pdf_cache/<batch_id>/; return name/size/cache_file per file."""
     out: List[Dict[str, Any]] = []
     dest_dir = batch_dir(batch_id)
 
@@ -77,11 +73,7 @@ def remove_batch_cache(batch_id: str | None) -> None:
 
 
 def remove_all_cache() -> None:
-    """
-    Remove all cached preview PDFs across batches.
-
-    Use this for strict privacy cleanup flows (e.g. explicit reset/new upload).
-    """
+    """Delete the entire .pdf_cache directory."""
     root = cache_root()
     if root.is_dir():
         shutil.rmtree(root, ignore_errors=True)

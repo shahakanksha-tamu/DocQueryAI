@@ -3,12 +3,7 @@ from rag.chunking import chunk_documents
 from rag.indexing import build_chroma_index
 
 def rag_processing(uploaded_files, batch_id: str | None = None):
-    """
-    End-to-end preprocessing up to vector store creation (in-memory).
-
-    Returns:
-      page_docs, chunk_docs, vectorstore
-    """
+    """Parse PDFs -> chunk -> in-memory Chroma. Returns (page_docs, chunk_docs, vectorstore)."""
     page_docs = process_uploaded_documents(uploaded_files)
     chunk_docs = chunk_documents(page_docs)
 

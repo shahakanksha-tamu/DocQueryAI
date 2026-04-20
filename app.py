@@ -42,7 +42,6 @@ html, body, [class*="css"] {
     padding-bottom: 0;  
 }
 
-/* Brand*/
 .brand-bar {
     margin-top:0 !important;   
     display: flex;
@@ -67,7 +66,6 @@ html, body, [class*="css"] {
     color: var(--dq-primary);
 }
 
-/* HERO FLEX */
 .hero-container {
     display: flex;
     flex-direction: column;
@@ -76,7 +74,6 @@ html, body, [class*="css"] {
     text-align: center;
 }
 
-/* Title */
 .hero-title {
     font-size: 3.2rem;
     font-weight: 800;
@@ -84,7 +81,6 @@ html, body, [class*="css"] {
     margin-bottom: 1.5rem;
 }
 
-/* Tagline */
 .hero-tagline {
     font-size: 1.2rem;
     color: var(--dq-muted);
@@ -92,18 +88,15 @@ html, body, [class*="css"] {
     max-width: 650px;
 }
 
-/* Accent colors */
 .purple { color: var(--dq-primary); }
 .orange { color: #FF7A18; }
 
-/* Force button wrapper to center */
 .hero-button {
     display: flex !important;
     justify-content: center !important;
     width: 100%;
 }
 
-/* Button styling */
 .hero-button {
     background: linear-gradient(135deg, var(--dq-primary), #6D28D9);
     color: white;
@@ -117,7 +110,6 @@ html, body, [class*="css"] {
 
 .hero-button:hover { transform: translateY(-2px); }
 
-/*Section Divider*/
 .section-divider {
     width: 140px;
     height: 1px;
@@ -143,7 +135,6 @@ html, body, [class*="css"] {
     margin-bottom: 60px;
 }
 
-/*STEPS SECTION*/
 .steps-grid {
     display: flex;
     justify-content: space-between;
@@ -203,7 +194,6 @@ html, body, [class*="css"] {
     unsafe_allow_html=True,
 )
 
-# Branding 
 st.markdown("""
 <div class="brand-bar">
     <div class="brand">
@@ -213,7 +203,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Hero Content
 st.markdown("""
 <div class="hero-container">
     <div class="hero-title">
@@ -233,12 +222,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# section divider
 st.markdown("""
   <div class="section-divider"></div>
 """, unsafe_allow_html=True)
 
-# docquery usage
 st.markdown("""
 <div class="section-container">
     <div class="section-title">
@@ -250,7 +237,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# steps section
 st.markdown("""
 <div class="steps-grid">
      <div class="step-item">

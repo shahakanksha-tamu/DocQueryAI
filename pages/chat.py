@@ -16,8 +16,7 @@ from utils.rag_state import (
 
 from rag.qa import answer_question
 
-# Two-step phase: Streamlit paints after each run; we need a fast run with only the user
-# bubble, then a run that calls the LLM (otherwise UI updates once after generation).
+# Two-step rerun: show user message first, then run the LLM on the next run.
 CHAT_PHASE_KEY = "_dq_chat_phase"
 
 _WELCOME_ASSISTANT_MSG = (
@@ -27,7 +26,7 @@ _WELCOME_ASSISTANT_MSG = (
 
 
 def _format_chat_body(text: str) -> str:
-    """Escape HTML, preserve line breaks, allow simple **bold** from the model."""
+    """HTML-escape chat text; newlines and **bold** to safe HTML."""
     if not text:
         return ""
     safe = html.escape(str(text))
@@ -37,6 +36,7 @@ def _format_chat_body(text: str) -> str:
 
 
 def _chat_bubble_html(role: str, inner_html: str) -> str:
+    """One chat row (user or assistant) as HTML."""
     if role in ("user", "human"):
         return (
             f'<div class="dq-chat-row dq-row-user">'
@@ -60,6 +60,7 @@ def render_chat_bubble(role: str, content: str) -> None:
 
 
 def _render_sources_expander(sources: list) -> None:
+    """Show cited pages grouped by document."""
     with st.expander("Sources"):
         pages_by_doc: dict = {}
         for s in sources:
@@ -104,7 +105,7 @@ html, body, [data-testid="stAppViewContainer"] {
     font-family: 'Sora', sans-serif;
 }
 
-/* Room below Streamlit chrome (sidebar toggle / minimal toolbar) so titles are not clipped */
+/* Push content below Streamlit top bar */
 [data-testid="stMainBlockContainer"] {
     padding-top: calc(3.75rem + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: 6rem !important;
@@ -149,7 +150,7 @@ html, body, [data-testid="stAppViewContainer"] {
     color: #94a3b8;
 }
 
-/* WhatsApp-style: assistant left, user right */
+/* Chat bubbles: assistant left, user right */
 .dq-chat-row {
     display: flex;
     width: 100%;
@@ -165,7 +166,7 @@ html, body, [data-testid="stAppViewContainer"] {
     align-items: flex-end;
     gap: 0.45rem;
 }
-/* Streamlit-style square avatars: orange bot (assistant), red user — matches default chat UI */
+/* Square avatars */
 .dq-avatar {
     width: 2.5rem;
     height: 2.5rem;

@@ -5,6 +5,7 @@ from utils.pdf_cache import cache_root, is_valid_cache_filename
 
 
 def _get_query_param(name: str) -> str | None:
+    """Read one query param (st.query_params or legacy API)."""
     try:
         params = st.query_params  # type: ignore[attr-defined]
         val = params.get(name)
@@ -20,7 +21,7 @@ def _get_query_param(name: str) -> str | None:
 
 
 def _resolve_doc_id() -> tuple[str | None, str | None]:
-
+    """batch_id + cache filename from session, else from URL (legacy links)."""
     batch_id = st.session_state.get("batch_id")
     doc_id = st.session_state.get("preview_cache_file")
 
@@ -41,7 +42,7 @@ st.markdown(
     """
 <style>
 html, body { margin: 0; padding: 0; }
-/* Room below Streamlit header / deploy toolbar (same idea as pages/chat.py) */
+/* Clear Streamlit header overlap */
 [data-testid="stMainBlockContainer"] {
     padding-top: calc(3.75rem + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: 1.5rem !important;

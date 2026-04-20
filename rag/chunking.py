@@ -7,12 +7,7 @@ from config import CHUNK_OVERLAP, CHUNK_SIZE
 
 
 def chunk_documents(documents: List[Document]) -> List[Document]:
-    """
-    Split a list of page-level LangChain Documents into smaller chunk Documents.
-
-    Metadata is preserved by the splitter so chunks retain source info like
-    document_name, document_id, and page_number.
-    """
+    """Split page-level docs into chunks; metadata and chunk_id stay on each chunk."""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
@@ -24,15 +19,7 @@ def chunk_documents(documents: List[Document]) -> List[Document]:
 
 
 def add_chunk_ids(chunks: List[Document]) -> List[Document]:
-    """
-    Add chunk ids for source tracking.
-
-    For readability and traceability, chunk ids are page-local:
-      document_id:p{page_number}:c{chunk_index_in_page}
-
-    Also adds:
-      - chunk_index_in_page (1-based)
-    """
+    """Set chunk_id (document_id:p{page}:c{n}) and chunk_index_in_page on each chunk."""
     counters: Dict[Tuple[str, int], int] = defaultdict(int)
 
     for chunk in chunks:

@@ -1,6 +1,8 @@
 import streamlit as st
 
+
 def show_loading_overlay(message="Processing your document..."):
+    """Full-screen loading overlay (HTML/CSS injected once)."""
     st.markdown(f"""
     <style>
     .loading-overlay {{

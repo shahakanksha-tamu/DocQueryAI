@@ -1,14 +1,12 @@
 import os
 
-# Chat session (Streamlit)
 MAX_CHAT_SESSIONS_PER_DOCUMENT = 5
 
-# Chunking and retrieval
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 TOP_K_RETRIEVAL = 5
 
-# Embeddings: Hugging Face Hub model via sentence-transformers (token optional; from secrets/env)
+# Embedding model (optional HF token via env or secrets)
 HF_EMBEDDING_MODEL = os.environ.get(
     "HF_EMBEDDING_MODEL",
     "BAAI/bge-small-en-v1.5",

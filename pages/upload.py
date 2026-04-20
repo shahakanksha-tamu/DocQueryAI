@@ -108,7 +108,6 @@ html, body, [data-testid="stAppViewContainer"] {
 </style>
 """, unsafe_allow_html=True)
 
-# Main Content
 _, top_right = st.columns([12, 2])
 with top_right:
     st.markdown(
@@ -165,7 +164,6 @@ if has_document():
                 st.session_state.pop(key, None)
             st.rerun()
 else:
-    # Upload Section
     st.markdown('<div class="upload-wrapper">', unsafe_allow_html=True)
 
     uploaded_files = st.file_uploader(
@@ -187,12 +185,9 @@ else:
         batch_id = str(uuid.uuid4())
         documents_meta = save_uploaded_pdfs_for_batch(uploaded_files, batch_id=batch_id)
 
-        # PDFs -> pages -> chunks -> in-memory Chroma vectorstore
         _, _, vectorstore = rag_processing(uploaded_files=uploaded_files, batch_id=batch_id)
         st.session_state.vectorstore = vectorstore
 
-        # Mark batch as ready for chat (metadata includes cached file id for preview)
         set_uploaded_batch(documents=documents_meta, batch_id=batch_id)
 
-        # Redirect to chat page
         st.switch_page("pages/chat.py")

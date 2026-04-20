@@ -13,6 +13,7 @@ from utils.hf_token import get_huggingface_api_token
 
 @st.cache_resource
 def get_embeddings() -> Embeddings:
+    """Singleton sentence-transformers embedder (optional HF token)."""
     token = get_huggingface_api_token()
     model_kwargs: dict = {"device": HF_EMBEDDING_DEVICE}
     if token:
@@ -26,7 +27,7 @@ def get_embeddings() -> Embeddings:
 
 
 def build_chroma_index(chunks: List[Document], collection_name: Optional[str] = None) -> Chroma:
-    """In-memory Chroma index built with Hugging Face sentence-transformers embeddings."""
+    """Build in-memory Chroma from chunked documents."""
     embeddings = get_embeddings()
     kwargs: dict = {"documents": chunks, "embedding": embeddings}
     if collection_name:
