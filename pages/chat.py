@@ -321,7 +321,7 @@ with st.sidebar:
             if isinstance(size_bytes, int):
                 size_mb = size_bytes / (1024 * 1024)
                 if cache_file and batch_id:
-                    href = f"preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
+                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
                     st.markdown(
                         _doc_preview_row_html(name=name, href=href, size_mb=size_mb),
                         unsafe_allow_html=True,
@@ -330,7 +330,7 @@ with st.sidebar:
                     st.caption(f"{name} • {size_mb:.2f} MB")
             else:
                 if cache_file and batch_id:
-                    href = f"preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
+                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
                     st.markdown(
                         _doc_preview_row_html(name=name, href=href),
                         unsafe_allow_html=True,

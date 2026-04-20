@@ -1,4 +1,7 @@
+import base64
+
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit.errors import StreamlitAPIException
 
 from utils.pdf_cache import cache_root
@@ -46,18 +49,23 @@ else:
     if not pdf_bytes:
         st.error("Cached preview file is empty.")
     else:
-        # Primary renderer: Streamlit PDF element.
+        # Primary renderer: Streamlit PDF element (more reliable than data: URLs for large files).
         try:
             st.pdf(pdf_bytes, height=900)
         except StreamlitAPIException:
-            # Deployed environments can block iframe/data: URL fallbacks via browser CSP.
-            st.warning("Inline preview is unavailable in this browser/deployment.")
-            st.download_button(
-                label="Download PDF",
-                data=pdf_bytes,
-                file_name=pdf_path.name,
-                mime="application/pdf",
-                use_container_width=True,
+            # Fallback for environments missing streamlit-pdf support.
+            b64 = base64.b64encode(pdf_bytes).decode("ascii")
+            iframe_html = f"""
+<iframe
+  title="PDF preview"
+  src="data:application/pdf;base64,{b64}"
+  style="width: 100%; height: 90vh; border: 0; background: #0f172a;"
+>
+</iframe>
+"""
+            components.html(iframe_html, height=950, scrolling=True)
+            st.caption(
+                "Using fallback preview renderer. If blank, install streamlit PDF support:"
+                " pip install streamlit[pdf]"
             )
-            st.caption("Download the file to open it locally.")
 
