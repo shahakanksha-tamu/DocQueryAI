@@ -1,7 +1,4 @@
-import base64
-
 import streamlit as st
-import streamlit.components.v1 as components
 from streamlit.errors import StreamlitAPIException
 
 from utils.pdf_cache import cache_root
@@ -45,27 +42,24 @@ elif not (pdf_path := (cache_root() / str(batch_id) / str(doc_id))):
 elif not pdf_path.is_file():
     st.error("Preview not found. Please re-upload your PDF.")
 else:
-    pdf_bytes = pdf_path.read_bytes()
-    if not pdf_bytes:
+    if pdf_path.stat().st_size == 0:
         st.error("Cached preview file is empty.")
     else:
-        # Primary renderer: Streamlit PDF element (more reliable than data: URLs for large files).
+        # Standard Streamlit PDF viewer (requires `streamlit[pdf]` / streamlit-pdf).
+        # See: https://docs.streamlit.io/develop/api-reference/media/st.pdf
         try:
-            st.pdf(pdf_bytes, height=900)
-        except StreamlitAPIException:
-            # Fallback for environments missing streamlit-pdf support.
-            b64 = base64.b64encode(pdf_bytes).decode("ascii")
-            iframe_html = f"""
-<iframe
-  title="PDF preview"
-  src="data:application/pdf;base64,{b64}"
-  style="width: 100%; height: 90vh; border: 0; background: #0f172a;"
->
-</iframe>
-"""
-            components.html(iframe_html, height=950, scrolling=True)
-            st.caption(
-                "Using fallback preview renderer. If blank, install streamlit PDF support:"
-                " pip install streamlit[pdf]"
+            st.pdf(str(pdf_path), height=900)
+        except StreamlitAPIException as e:
+            st.warning(str(e))
+            pdf_bytes = pdf_path.read_bytes()
+            st.download_button(
+                label="Download PDF",
+                data=pdf_bytes,
+                file_name=pdf_path.name,
+                mime="application/pdf",
+                use_container_width=True,
             )
-
+            st.caption(
+                "Install the PDF extra: pip install \"streamlit[pdf]\" "
+                "and redeploy. You can open the file locally with the button above."
+            )
