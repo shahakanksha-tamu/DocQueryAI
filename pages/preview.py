@@ -41,7 +41,11 @@ st.markdown(
     """
 <style>
 html, body { margin: 0; padding: 0; }
-[data-testid="stMainBlockContainer"] { padding-top: 0 !important; }
+/* Room below Streamlit header / deploy toolbar (same idea as pages/chat.py) */
+[data-testid="stMainBlockContainer"] {
+    padding-top: calc(3.75rem + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 1.5rem !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
