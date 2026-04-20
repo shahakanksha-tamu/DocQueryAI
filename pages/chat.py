@@ -1,6 +1,5 @@
 import html
 import re
-from urllib.parse import quote
 
 import streamlit as st
 
@@ -91,18 +90,6 @@ def _render_sources_expander(sources: list) -> None:
             st.write(
                 ", ".join([f"{name} ({sid})" if sid else name for name, sid in unique_docs])
             )
-
-
-def _doc_preview_row_html(name: str, href: str, size_mb: float | None = None) -> str:
-    name_esc = html.escape(str(name))
-    size_suffix = f" • {size_mb:.2f} MB" if isinstance(size_mb, float) else ""
-    return (
-        '<div class="dq-doc-row">'
-        '<span class="material-icons dq-doc-icon" aria-hidden="true">open_in_new</span>'
-        f'<a class="dq-doc-link" href="{href}" target="_blank" rel="noopener noreferrer">{name_esc}</a>'
-        f'<span class="dq-doc-size">{size_suffix}</span>'
-        "</div>"
-    )
 
 
 init_session_state()
@@ -310,33 +297,32 @@ with st.sidebar:
         )
         st.markdown(f"`{label}`")
         st.markdown(
-            '<div class="dq-doc-hint">Click the document to open PDF preview.</div>',
+            '<div class="dq-doc-hint">Use Preview to view the PDF</div>',
             unsafe_allow_html=True,
         )
         batch_id = st.session_state.get("batch_id")
-        for doc in documents:
+        for i, doc in enumerate(documents):
             name = doc.get("name", "unknown")
             size_bytes = doc.get("size_bytes")
             cache_file = doc.get("cache_file")
-            if isinstance(size_bytes, int):
-                size_mb = size_bytes / (1024 * 1024)
-                if cache_file and batch_id:
-                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
-                    st.markdown(
-                        _doc_preview_row_html(name=name, href=href, size_mb=size_mb),
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.caption(f"{name} • {size_mb:.2f} MB")
+            size_mb = (
+                size_bytes / (1024 * 1024) if isinstance(size_bytes, int) else None
+            )
+            if cache_file and batch_id:
+                label = name if len(name) <= 44 else name[:41] + "…"
+                if st.button(
+                    f"Preview: {label}",
+                    key=f"sidebar_doc_preview_{i}",
+                    use_container_width=True,
+                ):
+                    st.session_state["preview_cache_file"] = cache_file
+                    st.switch_page("pages/preview.py")
+                if size_mb is not None:
+                    st.caption(f"{size_mb:.2f} MB")
+            elif size_mb is not None:
+                st.caption(f"{name} • {size_mb:.2f} MB")
             else:
-                if cache_file and batch_id:
-                    href = f"/preview?batch_id={quote(str(batch_id))}&doc_id={quote(str(cache_file))}"
-                    st.markdown(
-                        _doc_preview_row_html(name=name, href=href),
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.caption(name)
+                st.caption(name)
     else:
         st.markdown("No documents in session.")
 

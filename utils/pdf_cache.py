@@ -20,6 +20,17 @@ def batch_dir(batch_id: str) -> Path:
     return d
 
 
+def is_valid_cache_filename(name: str) -> bool:
+    """
+    Reject path traversal and unexpected names; must match files written by save_uploaded_pdfs_for_batch.
+    """
+    if not name or len(name) > 200:
+        return False
+    if any(bad in name for bad in ("/", "\\", "..")):
+        return False
+    return bool(re.fullmatch(r"\d+_[A-Za-z0-9._-]+\.pdf", name, re.IGNORECASE))
+
+
 def _safe_filename(name: str, max_len: int = 110) -> str:
     safe = re.sub(r"[^a-zA-Z0-9._-]+", "_", name).strip("._")
     safe = safe[:max_len] if len(safe) > max_len else safe

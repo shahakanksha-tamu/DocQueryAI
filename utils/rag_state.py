@@ -26,6 +26,8 @@ def _default_session_values() -> Dict[str, Any]:
         "chat_sessions": {},
         "current_chat_id": None,
         "error": None,
+        # Set when opening PDF preview from chat; used by pages/preview.py (no URL params required).
+        "preview_cache_file": None,
     }
 
 
