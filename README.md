@@ -17,7 +17,9 @@ At a high level, the system:
 
 ### Demo video
 
-[assets/demo_docqueryai.mov](assets/demo_docqueryai.mov)
+![DocQueryAI Demo](assets/demo_docqueryai.gif)
+
+Full video: [assets/demo_docqueryai.mov](assets/demo_docqueryai.mov)
 
 ## 1) Local installation and run
 
