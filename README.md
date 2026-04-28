@@ -1,5 +1,7 @@
 # DocQueryAI
 
+![DocQueryAI Demo](assets/demo_docqueryai.gif)
+
 DocQueryAI is a Streamlit-based document question-answering system. It uses a **Retrieval-Augmented Generation (RAG)** pipeline so users can upload one or more PDF documents, ask questions in natural language, and receive grounded answers with page-level source citations.
 
 The system is especially useful for long, unstructured documents such as **research papers, technical documents, user manuals, game rulebooks, API documentation, project reports, and etc**, where manual keyword search is time-consuming. It is designed for workflows like academic research, technical analysis, and knowledge management.
@@ -14,12 +16,6 @@ At a high level, the system:
 ## Architecture diagram
 
 ![DocQueryAI Architecture](assets/arch_diagram.png)
-
-### Demo video
-
-![DocQueryAI Demo](assets/demo_docqueryai.gif)
-
-Full video: [assets/demo_docqueryai.mov](assets/demo_docqueryai.mov)
 
 ## 1) Local installation and run
 
@@ -153,9 +149,7 @@ HF_EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 - Hugging Face token has access to configured chat model
 - No API tokens committed to the repository
 
-## Project links
+## HuggingFace Models
 
-- Repository: [https://github.com/shahakanksha-tamu/DocQueryAI](https://github.com/shahakanksha-tamu/DocQueryAI)
-- Demo video: [https://drive.google.com/file/d/14mGmEH6KbBdsg_aVFrXdlEpzFN7pLSn3/view](https://drive.google.com/file/d/14mGmEH6KbBdsg_aVFrXdlEpzFN7pLSn3/view)
 - Chat model: [https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct)
 - Embedding model: [https://huggingface.co/BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5)
