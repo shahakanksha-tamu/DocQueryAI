@@ -1,10 +1,12 @@
 import os
 
-MAX_CHAT_SESSIONS_PER_DOCUMENT = 5
+MAX_CHAT_SESSIONS_PER_DOCUMENT = int(
+    os.environ.get("MAX_CHAT_SESSIONS_PER_DOCUMENT", "5")
+)
 
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
-TOP_K_RETRIEVAL = 5
+CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
+TOP_K_RETRIEVAL = int(os.environ.get("TOP_K_RETRIEVAL", "5"))
 
 # Embedding model (optional HF token via env or secrets)
 HF_EMBEDDING_MODEL = os.environ.get(
